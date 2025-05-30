@@ -1,0 +1,253 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Bl0ck6 Hub v2.0.1",
+   Icon = 0,
+   LoadingTitle = "Bl0ck6 Hub v2.0.1",
+   LoadingSubtitle = "Loading...",
+   Theme = "Default",
+   ToggleUIKeybind = "K",
+   ConfigurationSaving = {
+      Enabled = true,
+      FileName = "Big Hub"
+   }
+})
+
+-- Abas
+local MainTab = Window:CreateTab("Main", 4483362458)
+local PlayerTab = Window:CreateTab("Player", 4483362458)
+local ExploitsTab = Window:CreateTab("Exploits", 4483362458)
+
+local player = game.Players.LocalPlayer
+local runService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+-- === MAIN TAB ===
+MainTab:CreateLabel("Bem vindo, " .. player.Name)
+MainTab:CreateLabel("Update  v2.0.1,changelogs:New scrips in exploit tab and player tab")
+
+local placeId = game.PlaceId
+local placeName = game:GetService("MarketplaceService"):GetProductInfo(placeId).Name
+MainTab:CreateLabel("Jogo: " .. placeName .. " (ID: " .. placeId .. ")")
+
+-- === PLAYER TAB ===
+
+local selectedSpeed = 16
+local selectedJump = 50
+local flying = false
+local bodyVelocity
+local bodyGyro
+local flySpeed = 50
+
+local function safeSetHumanoidProperty(property, value)
+   local character = player.Character
+   if character and character:FindFirstChild("Humanoid") then
+      character.Humanoid[property] = value
+   end
+end
+
+-- WalkSpeed slider
+PlayerTab:CreateSlider({
+   Name = "WalkSpeed",
+   Range = {0, 100},
+   Increment = 1,
+   Suffix = " WS",
+   CurrentValue = selectedSpeed,
+   Flag = "WalkSpeed",
+   Callback = function(v)
+      selectedSpeed = v
+      safeSetHumanoidProperty("WalkSpeed", v)
+      Rayfield:Notify("Velocidade Alterada", "Nova velocidade: " .. v .. " WS - made by bl0ck6", 3)
+   end,
+})
+
+-- JumpPower slider
+PlayerTab:CreateSlider({
+   Name = "JumpPower",
+   Range = {0, 100},
+   Increment = 1,
+   Suffix = " JP",
+   CurrentValue = selectedJump,
+   Flag = "JumpPower",
+   Callback = function(v)
+      selectedJump = v
+      safeSetHumanoidProperty("JumpPower", v)
+      Rayfield:Notify("Pulo Alterado", "Novo JumpPower: " .. v .. " - made by bl0ck6", 3)
+   end,
+})
+
+-- Resetar WalkSpeed e JumpPower
+PlayerTab:CreateButton({
+   Name = "Resetar WalkSpeed e JumpPower",
+   Callback = function()
+      selectedSpeed = 16
+      selectedJump = 50
+      safeSetHumanoidProperty("WalkSpeed", selectedSpeed)
+      safeSetHumanoidProperty("JumpPower", selectedJump)
+      Rayfield:Notify("Reset", "WalkSpeed e JumpPower resetados para padrão - made by bl0ck6", 3)
+   end,
+})
+
+-- Fly (voar) script adaptado para mobile
+local function startFly()
+   local character = player.Character
+   local hrp = character and character:FindFirstChild("HumanoidRootPart")
+   if not hrp then return end
+
+   bodyVelocity = Instance.new("BodyVelocity")
+   bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+   bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+   bodyVelocity.Parent = hrp
+
+   bodyGyro = Instance.new("BodyGyro")
+   bodyGyro.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+   bodyGyro.P = 1e4
+   bodyGyro.CFrame = hrp.CFrame
+   bodyGyro.Parent = hrp
+
+   flying = true
+   Rayfield:Notify("Voar", "Modo de voo ativado! Use o joystick para se mover e pular para subir - made by bl0ck6", 3)
+end
+
+local function stopFly()
+   flying = false
+   if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
+   if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
+   Rayfield:Notify("Voar", "Modo de voo desativado - made by bl0ck6", 3)
+end
+
+runService.RenderStepped:Connect(function()
+   if flying and bodyVelocity and bodyGyro then
+      local character = player.Character
+      local humanoid = character and character:FindFirstChild("Humanoid")
+      local hrp = character and character:FindFirstChild("HumanoidRootPart")
+      local camera = workspace.CurrentCamera
+      if not (character and humanoid and hrp and camera) then return end
+
+      local moveDir = humanoid.MoveDirection
+      local horizontalVelocity = moveDir * flySpeed
+      local verticalVelocity = 0
+
+      if humanoid:GetState() == Enum.HumanoidStateType.Jumping or UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+         verticalVelocity = flySpeed
+      else
+         verticalVelocity = 0
+      end
+
+      bodyVelocity.Velocity = Vector3.new(horizontalVelocity.X, verticalVelocity, horizontalVelocity.Z)
+      bodyGyro.CFrame = camera.CFrame
+   end
+end)
+
+PlayerTab:CreateButton({
+   Name = "Voar",
+   Callback = function()
+      if flying then
+         stopFly()
+      else
+         startFly()
+      end
+   end,
+})
+
+-- GodMode básico (servidor vê)
+PlayerTab:CreateButton({
+   Name = "GodMode (Servidor vê)",
+   Callback = function()
+      local character = player.Character
+      if character and character:FindFirstChild("Humanoid") then
+         character.Humanoid.MaxHealth = math.huge
+         character.Humanoid.Health = math.huge
+         Rayfield:Notify("GodMode", "GodMode ativado - made by bl0ck6", 3)
+      end
+   end,
+})
+
+-- === EXPLOITS TAB ===
+
+local infiniteJumpEnabled = false
+
+ExploitsTab:CreateToggle({
+   Name = "Infinite Jump",
+   CurrentValue = false,
+   Flag = "InfiniteJumpToggle",
+   Callback = function(value)
+      infiniteJumpEnabled = value
+      Rayfield:Notify("Infinite Jump", (value and "Ativado" or "Desativado") .. " - made by bl0ck6", 3)
+   end,
+})
+
+game:GetService("UserInputService").JumpRequest:Connect(function()
+   if infiniteJumpEnabled then
+      local character = player.Character
+      local humanoid = character and character:FindFirstChild("Humanoid")
+      if humanoid then
+         humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+      end
+   end
+end)
+
+ExploitsTab:CreateButton({
+   Name = "Full Bright",
+   Callback = function()
+      game:GetService("Lighting").Brightness = 2
+      game:GetService("Lighting").ClockTime = 14
+      game:GetService("Lighting").FogEnd = 100000
+      Rayfield:Notify("Full Bright", "Full Bright ativado - made by bl0ck6", 3)
+   end,
+})
+
+-- Infinite Stamina (exemplo simples: recarrega stamina se existir)
+ExploitsTab:CreateToggle({
+   Name = "Infinite Stamina",
+   CurrentValue = false,
+   Flag = "InfiniteStaminaToggle",
+   Callback = function(value)
+      if value then
+         Rayfield:Notify("Infinite Stamina", "Ativado - made by bl0ck6", 3)
+      else
+         Rayfield:Notify("Infinite Stamina", "Desativado - made by bl0ck6", 3)
+      end
+   end,
+})
+
+-- Loop para infinite stamina (exemplo básico, adapta conforme o jogo)
+local staminaLoop
+ExploitsTab:CreateToggle({
+   Name = "Infinite Stamina",
+   CurrentValue = false,
+   Flag = "InfiniteStaminaToggle",
+   Callback = function(value)
+      if value then
+         staminaLoop = runService.Heartbeat:Connect(function()
+            local character = player.Character
+            if character then
+               local stamina = character:FindFirstChild("Stamina") or character:FindFirstChild("Energy")
+               if stamina and stamina:IsA("NumberValue") then
+                  stamina.Value = stamina.MaxValue or 100
+               end
+            end
+         end)
+         Rayfield:Notify("Infinite Stamina", "Ativado - made by bl0ck6", 3)
+      else
+         if staminaLoop then staminaLoop:Disconnect() staminaLoop = nil end
+         Rayfield:Notify("Infinite Stamina", "Desativado - made by bl0ck6", 3)
+      end
+   end,
+})
+
+-- Equipar todos os itens (exemplo genérico, adapte ao seu jogo)
+ExploitsTab:CreateButton({
+   Name = "Equipar Todos Itens",
+   Callback = function()
+      local character = player.Character
+      if character then
+         for _, tool in ipairs(player.Backpack:GetChildren()) do
+            if tool:IsA("Tool") then
+               tool.Parent = character
+            end
+         end
+         Rayfield:Notify("Equipar Itens", "Todos os itens foram equipados - made by bl0ck6", 3)
+      end
+   end,
+})
