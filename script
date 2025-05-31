@@ -197,20 +197,6 @@ ExploitsTab:CreateButton({
    end,
 })
 
--- Infinite Stamina (exemplo simples: recarrega stamina se existir)
-ExploitsTab:CreateToggle({
-   Name = "Infinite Stamina",
-   CurrentValue = false,
-   Flag = "InfiniteStaminaToggle",
-   Callback = function(value)
-      if value then
-         Rayfield:Notify("Infinite Stamina", "Ativado - made by bl0ck6", 3)
-      else
-         Rayfield:Notify("Infinite Stamina", "Desativado - made by bl0ck6", 3)
-      end
-   end,
-})
-
 -- Loop para infinite stamina (exemplo básico, adapta conforme o jogo)
 local staminaLoop
 ExploitsTab:CreateToggle({
